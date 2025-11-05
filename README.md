@@ -1,4 +1,4 @@
-# sverd_barbershop_rapi
+# sverd_barbershop
 
 A new Flutter project.
 

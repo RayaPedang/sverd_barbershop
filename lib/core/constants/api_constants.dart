@@ -1,7 +1,7 @@
 class ApiConstants {
   // Base URL untuk API Anda. IP 10.0.2.2 adalah cara emulator Android
   // mengakses 'localhost' di mesin host (laptop/PC Anda).
-  static const String _baseUrl = 'http://localhost/sverd_api';
+  static const String _baseUrl = 'http://10.0.2.2/sverd_api';
 
   // Endpoint untuk mengambil daftar cabang
   static const String getBranches = '$_baseUrl/get_branches.php';

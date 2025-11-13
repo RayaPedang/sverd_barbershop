@@ -26,19 +26,20 @@ class _ProfileTabState extends State<ProfileTab> {
   String _displayName = 'Guest';
   bool _isEditing = false;
 
-  // --- PERBAIKAN 1: Kita hanya butuh _imagePath ---
   String _imagePath = '';
-  // XFile? _webImage; // <-- Dihapus
+
+  // --- TAMBAHKAN INSTANCE NOTIFICATION SERVICE ---
+  final NotificationService _notificationService = NotificationService();
 
   // Notification settings
   bool _notificationEnabled = false;
-  int _notificationInterval = 30;
+  int _notificationInterval = 30; // Default
 
   @override
   void initState() {
     super.initState();
     _loadProfileData();
-    _loadNotificationSettings();
+    _loadNotificationSettings(); // <-- Fungsi ini akan dimodifikasi
   }
 
   @override
@@ -61,9 +62,6 @@ class _ProfileTabState extends State<ProfileTab> {
       _fullNameController.text = userData['fullName'] ?? _displayName;
       _phoneController.text = userData['phone'] ?? '';
       _kesanPesanController.text = userData['kesanPesan'] ?? '';
-
-      // --- PERBAIKAN 2: Selalu muat _imagePath ---
-      // (Tidak perlu cek kIsWeb di sini)
       _imagePath = userData['imagePath'] ?? '';
     }
 
@@ -72,26 +70,25 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
+  // --- MODIFIKASI FUNGSI INI ---
   void _loadNotificationSettings() {
     setState(() {
-      _notificationEnabled = NotificationService().isNotificationEnabled();
-      _notificationInterval = NotificationService().getNotificationInterval();
+      // Ambil data dari service (yang membaca dari Hive)
+      _notificationEnabled = _notificationService.isNotificationEnabled();
+      _notificationInterval = _notificationService.getNotificationInterval();
     });
   }
 
-  // --- PERBAIKAN 3: Modifikasi _pickImage ---
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       if (kIsWeb) {
-        // Untuk Web, path-nya adalah URL blob
         setState(() {
           _imagePath = pickedFile.path;
         });
       } else {
-        // Untuk Mobile, kita salin filenya
         final appDir = await getApplicationDocumentsDirectory();
         final fileName = p.basename(pickedFile.path);
         final savedImage = await File(
@@ -104,7 +101,6 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  // --- PERBAIKAN 4: Modifikasi _saveUpdates ---
   void _saveUpdates() {
     final box = Hive.box('sverd_box');
     final userData = box.get(_email);
@@ -114,8 +110,6 @@ class _ProfileTabState extends State<ProfileTab> {
       userData['fullName'] = _fullNameController.text;
       userData['phone'] = _phoneController.text;
       userData['kesanPesan'] = _kesanPesanController.text;
-
-      // Selalu simpan _imagePath, baik itu path file (mobile) atau URL (web)
       userData['imagePath'] = _imagePath;
 
       box.put(_email, userData);
@@ -170,7 +164,7 @@ class _ProfileTabState extends State<ProfileTab> {
     return FileImage(File(_imagePath));
   }
 
-  // Notification Methods
+  // --- MODIFIKASI FUNGSI NOTIFIKASI ---
   Future<void> _toggleNotification(bool value) async {
     setState(() {
       _notificationEnabled = value;
@@ -178,21 +172,23 @@ class _ProfileTabState extends State<ProfileTab> {
 
     try {
       if (value) {
-        await NotificationService().scheduleHaircutReminder(
+        // Panggil fungsi schedule baru
+        await _notificationService.scheduleRepeatingNotification(
           intervalDays: _notificationInterval,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Notifikasi diaktifkan! Akan muncul setiap $_notificationInterval hari',
+                'Notifikasi diaktifkan! Akan muncul setiap $_notificationInterval hari.',
               ),
               backgroundColor: Colors.green,
             ),
           );
         }
       } else {
-        await NotificationService().cancelAllNotifications();
+        // Panggil fungsi cancel baru
+        await _notificationService.cancelAllNotifications();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -211,19 +207,28 @@ class _ProfileTabState extends State<ProfileTab> {
           ),
         );
       }
-      _loadNotificationSettings();
+      _loadNotificationSettings(); // Kembalikan ke state semula jika error
     }
   }
 
   Future<void> _updateNotificationInterval(int days) async {
-    await NotificationService().updateNotificationInterval(days);
     setState(() {
       _notificationInterval = days;
     });
+
+    // Jika notifikasi sedang aktif, jadwalkan ulang dengan interval baru
+    if (_notificationEnabled) {
+      await _notificationService.scheduleRepeatingNotification(
+          intervalDays: days);
+    } else {
+      // Jika tidak aktif, cukup simpan intervalnya untuk nanti
+      await _notificationService.updateNotificationInterval(days);
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Interval notifikasi diubah menjadi $days hari'),
+          content: Text('Interval notifikasi diubah menjadi $days hari.'),
           backgroundColor: Colors.blue,
         ),
       );
@@ -231,13 +236,12 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _testNotification() async {
-    await NotificationService().showTestNotification();
-
+    await _notificationService.showTestNotification(); // Panggil fungsi tes
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Test notifikasi akan muncul dalam 5 detik. Coba tutup aplikasi.',
+            'Test notifikasi akan muncul dalam 5 detik.',
           ),
           backgroundColor: Colors.purple,
           duration: Duration(seconds: 4),
@@ -260,6 +264,7 @@ class _ProfileTabState extends State<ProfileTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ... (Widget Profil Anda yang sudah ada) ...
               Center(
                 child: Stack(
                   children: [
@@ -267,7 +272,6 @@ class _ProfileTabState extends State<ProfileTab> {
                       radius: 50,
                       backgroundColor: avatarBgColor,
                       backgroundImage: _buildProfileImage(),
-                      // --- PERBAIKAN 7: Logika child disederhanakan ---
                       child: _imagePath.isEmpty
                           ? Icon(Icons.person, size: 60, color: avatarIconColor)
                           : null,
@@ -331,7 +335,7 @@ class _ProfileTabState extends State<ProfileTab> {
               ),
               const SizedBox(height: 32),
 
-              // Notification Settings
+              // --- BAGIAN INI YANG DIMODIFIKASI ---
               _buildSectionTitle('Pengaturan Notifikasi'),
               const SizedBox(height: 12),
               Container(
@@ -350,7 +354,9 @@ class _ProfileTabState extends State<ProfileTab> {
                         Row(
                           children: [
                             Icon(
-                              Icons.notifications_active,
+                              _notificationEnabled
+                                  ? Icons.notifications_active
+                                  : Icons.notifications_off_outlined,
                               color: kPrimaryColor,
                               size: 20,
                             ),
@@ -379,7 +385,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Interval Pengingat',
+                            'Ulangi Notifikasi Setiap:',
                             style: TextStyle(
                               color: kSecondaryTextColor,
                               fontSize: 13,
@@ -389,7 +395,8 @@ class _ProfileTabState extends State<ProfileTab> {
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: [7, 14, 30].map((days) {
+                            // GANTI INTERVAL DI SINI
+                            children: [14, 30, 60].map((days) {
                               final isSelected = _notificationInterval == days;
                               return InkWell(
                                 onTap: () => _updateNotificationInterval(days),
@@ -446,9 +453,10 @@ class _ProfileTabState extends State<ProfileTab> {
                   ],
                 ),
               ),
+              // --- AKHIR BAGIAN MODIFIKASI ---
               const SizedBox(height: 32),
 
-              // Kesan dan Pesan
+              // ... (Widget Kesan dan Pesan & Tombol) ...
               _buildSectionTitle('Kesan dan Pesan'),
               const SizedBox(height: 12),
               TextField(

@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sverd_barbershop/presentation/pages/auth/auth_page.dart'; // <-- DIMODIFIKASI
-import 'package:sverd_barbershop/core/services/notification_service.dart'; // <-- DIMODIFIKASI
-import 'package:sverd_barbershop/core/services/storage_service.dart'; // <-- IMPORT BARU
-import 'package:sverd_barbershop/core/theme/colors.dart'; // <-- DIMODIFIKASI
+import 'package:sverd_barbershop/presentation/pages/splash/splash_page.dart'; // <-- Import Splash Page
+import 'package:sverd_barbershop/core/services/notification_service.dart';
+import 'package:sverd_barbershop/core/services/storage_service.dart';
+import 'package:sverd_barbershop/core/theme/colors.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi StorageService (Hive) kita
-  await StorageService().initialize(); // <-- DIMODIFIKASI
-  final box = StorageService().box; // <-- DIMODIFIKASI (menggunakan getter)
+  // Inisialisasi StorageService (Hive)
+  await StorageService().initialize();
+  final box = StorageService().box;
 
-  // --- MODIFIKASI DISINI ---
-  // Kita panggil metode 'initialize' statis yang baru.
-  // Ini akan membuat dan menginisialisasi instance singleton-nya.
+  // Inisialisasi Notification Service
   await NotificationService.initialize();
-  // -------------------------
 
+  // Jadwalkan notifikasi default jika belum ada
   if (!box.containsKey('notification_enabled')) {
-    // Sekarang kita bisa panggil instance-nya dengan aman
     await NotificationService().scheduleHaircutReminder(intervalDays: 30);
-    print('Auto-enabled haircut reminder notification');
+    debugPrint('Auto-enabled haircut reminder notification');
   }
 
   runApp(const MyApp());
@@ -65,7 +62,8 @@ class MyApp extends StatelessWidget {
           titleLarge: TextStyle(color: kTextColor),
         ),
       ),
-      home: const AuthPage(),
+      // Ubah home ke SplashPage untuk pengecekan login
+      home: const SplashPage(),
     );
   }
 }

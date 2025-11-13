@@ -16,9 +16,9 @@ Future<void> main() async {
   // 2. Inisialisasi Notification Service
   await NotificationService.initialize();
 
-  // 3. Jadwalkan notifikasi default jika belum ada (PERBAIKAN NAMA FUNGSI DISINI)
+  // 3. Jadwalkan notifikasi default jika belum ada
   if (!box.containsKey('notification_enabled')) {
-    // Menggunakan 'scheduleRepeatingNotification' bukan 'scheduleHaircutReminder'
+    // PERBAIKAN DISINI: Memanggil method yang benar 'scheduleRepeatingNotification'
     await NotificationService().scheduleRepeatingNotification(intervalDays: 30);
     debugPrint('Auto-enabled haircut reminder notification');
   }
@@ -63,7 +63,7 @@ class MyApp extends StatelessWidget {
           titleLarge: TextStyle(color: kTextColor),
         ),
       ),
-      // Arahkan ke SplashPage untuk pengecekan login
+      // Menggunakan SplashPage sebagai halaman awal
       home: const SplashPage(),
     );
   }

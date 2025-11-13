@@ -28,7 +28,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
   String _imagePath = '';
 
-  // --- TAMBAHKAN INSTANCE NOTIFICATION SERVICE ---
+  // Service Notifikasi
   final NotificationService _notificationService = NotificationService();
 
   // Notification settings
@@ -39,7 +39,7 @@ class _ProfileTabState extends State<ProfileTab> {
   void initState() {
     super.initState();
     _loadProfileData();
-    _loadNotificationSettings(); // <-- Fungsi ini akan dimodifikasi
+    _loadNotificationSettings();
   }
 
   @override
@@ -70,10 +70,8 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  // --- MODIFIKASI FUNGSI INI ---
   void _loadNotificationSettings() {
     setState(() {
-      // Ambil data dari service (yang membaca dari Hive)
       _notificationEnabled = _notificationService.isNotificationEnabled();
       _notificationInterval = _notificationService.getNotificationInterval();
     });
@@ -164,7 +162,6 @@ class _ProfileTabState extends State<ProfileTab> {
     return FileImage(File(_imagePath));
   }
 
-  // --- MODIFIKASI FUNGSI NOTIFIKASI ---
   Future<void> _toggleNotification(bool value) async {
     setState(() {
       _notificationEnabled = value;
@@ -172,7 +169,8 @@ class _ProfileTabState extends State<ProfileTab> {
 
     try {
       if (value) {
-        // Panggil fungsi schedule baru
+        // Saat diaktifkan, dia akan memanggil service
+        // Di service nanti logic waktunya ditentukan (apakah 30 hari lagi atau tes menit ini)
         await _notificationService.scheduleRepeatingNotification(
           intervalDays: _notificationInterval,
         );
@@ -180,14 +178,13 @@ class _ProfileTabState extends State<ProfileTab> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Notifikasi diaktifkan! Akan muncul setiap $_notificationInterval hari.',
+                'Notifikasi diaktifkan! (Cek log console untuk waktu triggernya)',
               ),
               backgroundColor: Colors.green,
             ),
           );
         }
       } else {
-        // Panggil fungsi cancel baru
         await _notificationService.cancelAllNotifications();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -207,7 +204,7 @@ class _ProfileTabState extends State<ProfileTab> {
           ),
         );
       }
-      _loadNotificationSettings(); // Kembalikan ke state semula jika error
+      _loadNotificationSettings();
     }
   }
 
@@ -216,12 +213,10 @@ class _ProfileTabState extends State<ProfileTab> {
       _notificationInterval = days;
     });
 
-    // Jika notifikasi sedang aktif, jadwalkan ulang dengan interval baru
     if (_notificationEnabled) {
       await _notificationService.scheduleRepeatingNotification(
           intervalDays: days);
     } else {
-      // Jika tidak aktif, cukup simpan intervalnya untuk nanti
       await _notificationService.updateNotificationInterval(days);
     }
 
@@ -230,21 +225,6 @@ class _ProfileTabState extends State<ProfileTab> {
         SnackBar(
           content: Text('Interval notifikasi diubah menjadi $days hari.'),
           backgroundColor: Colors.blue,
-        ),
-      );
-    }
-  }
-
-  Future<void> _testNotification() async {
-    await _notificationService.showTestNotification(); // Panggil fungsi tes
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Test notifikasi akan muncul dalam 5 detik.',
-          ),
-          backgroundColor: Colors.purple,
-          duration: Duration(seconds: 4),
         ),
       );
     }
@@ -264,7 +244,7 @@ class _ProfileTabState extends State<ProfileTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ... (Widget Profil Anda yang sudah ada) ...
+              // ... (Widget Profil Anda) ...
               Center(
                 child: Stack(
                   children: [
@@ -335,7 +315,7 @@ class _ProfileTabState extends State<ProfileTab> {
               ),
               const SizedBox(height: 32),
 
-              // --- BAGIAN INI YANG DIMODIFIKASI ---
+              // --- BAGIAN PENGATURAN NOTIFIKASI ---
               _buildSectionTitle('Pengaturan Notifikasi'),
               const SizedBox(height: 12),
               Container(
@@ -395,7 +375,6 @@ class _ProfileTabState extends State<ProfileTab> {
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            // GANTI INTERVAL DI SINI
                             children: [14, 30, 60].map((days) {
                               final isSelected = _notificationInterval == days;
                               return InkWell(
@@ -435,20 +414,7 @@ class _ProfileTabState extends State<ProfileTab> {
                           ),
                         ],
                       ),
-                      const Divider(height: 24),
-                      // Test Notification Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _testNotification,
-                          icon: const Icon(Icons.notification_add),
-                          label: const Text('Tes Notifikasi'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: kPrimaryColor,
-                            side: const BorderSide(color: kPrimaryColor),
-                          ),
-                        ),
-                      ),
+                      // Tombol Tes Notifikasi SUDAH DIHAPUS disini
                     ],
                   ],
                 ),
@@ -456,7 +422,7 @@ class _ProfileTabState extends State<ProfileTab> {
               // --- AKHIR BAGIAN MODIFIKASI ---
               const SizedBox(height: 32),
 
-              // ... (Widget Kesan dan Pesan & Tombol) ...
+              // ... (Sisa Widget Kesan Pesan & Tombol Logout) ...
               _buildSectionTitle('Kesan dan Pesan'),
               const SizedBox(height: 12),
               TextField(

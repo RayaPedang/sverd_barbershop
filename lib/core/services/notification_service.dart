@@ -2,24 +2,26 @@ import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sverd_barbershop/core/services/storage_service.dart';
-// ignore: depend_on_referenced_packages
-import 'package:timezone/data/latest_all.dart' as tz;
-// ignore: depend_on_referenced_packages
+
+// --- PERBAIKAN IMPORT DISINI ---
+// Kita ganti aliasnya menjadi 'tzData' agar tidak bentrok dengan 'tz' di bawahnya
+import 'package:timezone/data/latest_all.dart' as tzData;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  // 1. Singleton pattern
   static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
+
+  factory NotificationService() {
+    return _instance;
+  }
+
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-  // 2. Ambil box Hive dari StorageService
   final Box _box = StorageService().box;
 
-  // 3. Konstanta
   static const String _channelId = 'sverd_reminder_channel';
   static const String _channelName = 'Sverd Barbershop Reminder';
   static const String _channelDesc = 'Pengingat potong rambut berkala';
@@ -28,12 +30,13 @@ class NotificationService {
   static const String _hiveIntervalKey = 'notification_interval_days';
   static const String _hiveNextDateKey = 'notification_next_date';
 
-  /// Inisialisasi service
   static Future<void> initialize() async {
-    tz.initializeTimeZones();
+    // --- PERBAIKAN PEMANGGILAN DISINI ---
+    // Menggunakan alias 'tzData' yang baru
+    tzData.initializeTimeZones();
 
-    // Set lokasi default ke Jakarta agar tidak error 'LateInitializationError'
     try {
+      // Menggunakan alias 'tz' untuk fungsi lokasi
       final location = tz.getLocation('Asia/Jakarta');
       tz.setLocalLocation(location);
     } catch (e) {
@@ -83,33 +86,31 @@ class NotificationService {
     }
   }
 
-  // --- METHOD YANG DIBUTUHKAN OLEH PROFILE_TAB.DART ---
-
-  /// 1. Cek apakah notifikasi aktif
   bool isNotificationEnabled() {
     return _box.get(_hiveEnabledKey, defaultValue: false);
   }
 
-  /// 2. Ambil interval (default 30 hari)
   int getNotificationInterval() {
     return _box.get(_hiveIntervalKey, defaultValue: 30);
   }
 
-  /// 3. Jadwalkan notifikasi berulang
+  // --- [DEBUGGING SECTION] ---
+  // Ubah jam/menit di bawah ini untuk mengetes notifikasi
   Future<void> scheduleRepeatingNotification(
       {required int intervalDays}) async {
-    // Batalkan jadwal lama
     await _notifications.cancelAll();
 
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
-    // Jadwalkan X hari ke depan jam 10:00 pagi
+    // Ganti angka jam (10) dan menit (0) jika ingin tes
+    // Contoh Tes: now.add(Duration(minutes: 2)) -> untuk notif 2 menit lagi
     final tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local,
       now.year,
       now.month,
       now.day,
-      10,
+      10, // Jam 10 pagi
+      0, // Menit 0
     ).add(Duration(days: intervalDays));
 
     await _notifications.zonedSchedule(
@@ -128,12 +129,11 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
 
-    // Simpan state ke Hive
     await _box.put(_hiveEnabledKey, true);
     await _box.put(_hiveIntervalKey, intervalDays);
     await _box.put(_hiveNextDateKey, scheduledDate.toIso8601String());
@@ -141,12 +141,10 @@ class NotificationService {
     print('🔔 Notification scheduled for: $scheduledDate');
   }
 
-  /// 4. Update interval tanpa menjadwalkan ulang (jika switch mati)
   Future<void> updateNotificationInterval(int newIntervalDays) async {
     await _box.put(_hiveIntervalKey, newIntervalDays);
   }
 
-  /// 5. Batalkan semua notifikasi
   Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
     await _box.put(_hiveEnabledKey, false);
@@ -154,29 +152,7 @@ class NotificationService {
     print('🔕 All notifications cancelled.');
   }
 
-  /// 6. Tampilkan notifikasi tes (muncul dalam 5 detik)
   Future<void> showTestNotification() async {
-    final tz.TZDateTime scheduledDate =
-        tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
-
-    await _notifications.zonedSchedule(
-      999,
-      'Test Notifikasi SVERD',
-      'Ini contoh notifikasi pengingat cukur rambut! 💈',
-      scheduledDate,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'test_channel',
-          'Test Channel',
-          importance: Importance.max,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+    // Fungsi tes manual (opsional)
   }
 }

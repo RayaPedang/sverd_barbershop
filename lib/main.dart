@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sverd_barbershop/presentation/pages/splash/splash_page.dart'; // <-- Import Splash Page
+import 'package:sverd_barbershop/presentation/pages/splash/splash_page.dart';
 import 'package:sverd_barbershop/core/services/notification_service.dart';
 import 'package:sverd_barbershop/core/services/storage_service.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
@@ -9,16 +9,17 @@ import 'package:sverd_barbershop/core/theme/colors.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi StorageService (Hive)
+  // 1. Inisialisasi StorageService (Hive)
   await StorageService().initialize();
   final box = StorageService().box;
 
-  // Inisialisasi Notification Service
+  // 2. Inisialisasi Notification Service
   await NotificationService.initialize();
 
-  // Jadwalkan notifikasi default jika belum ada
+  // 3. Jadwalkan notifikasi default jika belum ada (PERBAIKAN NAMA FUNGSI DISINI)
   if (!box.containsKey('notification_enabled')) {
-    await NotificationService().scheduleHaircutReminder(intervalDays: 30);
+    // Menggunakan 'scheduleRepeatingNotification' bukan 'scheduleHaircutReminder'
+    await NotificationService().scheduleRepeatingNotification(intervalDays: 30);
     debugPrint('Auto-enabled haircut reminder notification');
   }
 
@@ -62,7 +63,7 @@ class MyApp extends StatelessWidget {
           titleLarge: TextStyle(color: kTextColor),
         ),
       ),
-      // Ubah home ke SplashPage untuk pengecekan login
+      // Arahkan ke SplashPage untuk pengecekan login
       home: const SplashPage(),
     );
   }

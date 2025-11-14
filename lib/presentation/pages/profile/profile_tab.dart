@@ -33,7 +33,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
   // Notification settings
   bool _notificationEnabled = false;
-  int _notificationInterval = 30; // Default
+  int _notificationInterval = 30;
 
   @override
   void initState() {
@@ -169,17 +169,13 @@ class _ProfileTabState extends State<ProfileTab> {
 
     try {
       if (value) {
-        // Saat diaktifkan, dia akan memanggil service
-        // Di service nanti logic waktunya ditentukan (apakah 30 hari lagi atau tes menit ini)
         await _notificationService.scheduleRepeatingNotification(
           intervalDays: _notificationInterval,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Notifikasi diaktifkan! (Cek log console untuk waktu triggernya)',
-              ),
+            const SnackBar(
+              content: Text('Notifikasi diaktifkan!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -230,6 +226,160 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
+  // =====================================================
+  // 🧪 FUNGSI TES NOTIFIKASI BARU
+  // =====================================================
+
+  Future<void> _testNotificationInstant() async {
+    try {
+      await _notificationService.showTestNotificationInstant();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                '✅ Notifikasi instan terkirim! Cek notification panel Anda'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Gagal mengirim notifikasi: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _testNotificationDelayed() async {
+    // Dialog untuk memilih delay
+    final delay = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: kBackgroundColor,
+        title: const Text(
+          '⏰ Pilih Delay Notifikasi',
+          style: TextStyle(color: kTextColor, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Pilih berapa detik lagi notifikasi akan muncul.\nTutup aplikasi untuk mengetes!',
+              style: TextStyle(color: kSecondaryTextColor, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            _buildDelayOption(context, 5, '5 detik'),
+            _buildDelayOption(context, 10, '10 detik'),
+            _buildDelayOption(context, 30, '30 detik'),
+            _buildDelayOption(context, 60, '1 menit'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal',
+                style: TextStyle(color: kSecondaryTextColor)),
+          ),
+        ],
+      ),
+    );
+
+    if (delay != null) {
+      try {
+        await _notificationService.showTestNotificationDelayed(
+            delaySeconds: delay);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '⏰ Notifikasi dijadwalkan $delay detik lagi!\n👉 Tutup aplikasi sekarang untuk mengetes',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Gagal menjadwalkan notifikasi: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildDelayOption(BuildContext context, int seconds, String label) {
+    return ListTile(
+      onTap: () => Navigator.pop(context, seconds),
+      leading: const Icon(Icons.alarm, color: kPrimaryColor),
+      title: Text(label, style: const TextStyle(color: kTextColor)),
+      trailing: const Icon(Icons.chevron_right, color: kSecondaryTextColor),
+    );
+  }
+
+  Future<void> _checkPendingNotifications() async {
+    final pending = await _notificationService.getPendingNotifications();
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: kBackgroundColor,
+          title: const Text(
+            '📋 Notifikasi Terjadwal',
+            style: TextStyle(color: kTextColor, fontWeight: FontWeight.bold),
+          ),
+          content: pending.isEmpty
+              ? const Text(
+                  'Tidak ada notifikasi yang dijadwalkan',
+                  style: TextStyle(color: kSecondaryTextColor),
+                )
+              : SizedBox(
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: pending.length,
+                    itemBuilder: (context, index) {
+                      final notif = pending[index];
+                      return ListTile(
+                        dense: true,
+                        leading: const Icon(Icons.notification_important,
+                            color: kPrimaryColor, size: 20),
+                        title: Text(
+                          notif.title ?? 'No Title',
+                          style:
+                              const TextStyle(color: kTextColor, fontSize: 13),
+                        ),
+                        subtitle: Text(
+                          'ID: ${notif.id}',
+                          style: const TextStyle(
+                              color: kSecondaryTextColor, fontSize: 11),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK', style: TextStyle(color: kPrimaryColor)),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color avatarBgColor = kSecondaryTextColor.withAlpha(51);
@@ -244,7 +394,7 @@ class _ProfileTabState extends State<ProfileTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ... (Widget Profil Anda) ...
+              // Profile Avatar
               Center(
                 child: Stack(
                   children: [
@@ -315,7 +465,7 @@ class _ProfileTabState extends State<ProfileTab> {
               ),
               const SizedBox(height: 32),
 
-              // --- BAGIAN PENGATURAN NOTIFIKASI ---
+              // Pengaturan Notifikasi
               _buildSectionTitle('Pengaturan Notifikasi'),
               const SizedBox(height: 12),
               Container(
@@ -414,15 +564,89 @@ class _ProfileTabState extends State<ProfileTab> {
                           ),
                         ],
                       ),
-                      // Tombol Tes Notifikasi SUDAH DIHAPUS disini
                     ],
                   ],
                 ),
               ),
-              // --- AKHIR BAGIAN MODIFIKASI ---
               const SizedBox(height: 32),
 
-              // ... (Sisa Widget Kesan Pesan & Tombol Logout) ...
+              // =====================================================
+              // 🧪 SECTION TES NOTIFIKASI BARU
+              // =====================================================
+              _buildSectionTitle('🧪 Tes Notifikasi'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.0),
+                  border: Border.all(color: dividerColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Gunakan fitur ini untuk memastikan notifikasi berfungsi dengan baik',
+                      style: TextStyle(
+                        color: kSecondaryTextColor,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Tombol Tes Instan
+                    OutlinedButton.icon(
+                      onPressed: _testNotificationInstant,
+                      icon: const Icon(Icons.flash_on, size: 20),
+                      label: const Text('Tes Notifikasi Instan'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.green,
+                        side: const BorderSide(color: Colors.green),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Tombol Tes Delayed (Background)
+                    OutlinedButton.icon(
+                      onPressed: _testNotificationDelayed,
+                      icon: const Icon(Icons.alarm, size: 20),
+                      label: const Text('Tes Notifikasi Background'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Tombol Cek Pending
+                    OutlinedButton.icon(
+                      onPressed: _checkPendingNotifications,
+                      icon: const Icon(Icons.list, size: 20),
+                      label: const Text('Cek Notifikasi Terjadwal'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue,
+                        side: const BorderSide(color: Colors.blue),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Kesan dan Pesan
               _buildSectionTitle('Kesan dan Pesan'),
               const SizedBox(height: 12),
               TextField(

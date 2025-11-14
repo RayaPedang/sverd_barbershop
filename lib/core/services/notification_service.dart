@@ -2,11 +2,9 @@ import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sverd_barbershop/core/services/storage_service.dart';
-
-// --- PERBAIKAN IMPORT DISINI ---
-// Kita ganti aliasnya menjadi 'tzData' agar tidak bentrok dengan 'tz' di bawahnya
 import 'package:timezone/data/latest_all.dart' as tzData;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -31,12 +29,9 @@ class NotificationService {
   static const String _hiveNextDateKey = 'notification_next_date';
 
   static Future<void> initialize() async {
-    // --- PERBAIKAN PEMANGGILAN DISINI ---
-    // Menggunakan alias 'tzData' yang baru
     tzData.initializeTimeZones();
 
     try {
-      // Menggunakan alias 'tz' untuk fungsi lokasi
       final location = tz.getLocation('Asia/Jakarta');
       tz.setLocalLocation(location);
     } catch (e) {
@@ -62,7 +57,7 @@ class NotificationService {
     await _instance._notifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (details) {
-        // Handle tap event here
+        print('📱 Notification tapped: ${details.payload}');
       },
     );
 
@@ -72,10 +67,21 @@ class NotificationService {
 
   Future<void> _requestPermissions() async {
     try {
+      // Request permission notifikasi biasa
       await _notifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
+
+      // Request permission untuk exact alarm (Android 12+)
+      if (await Permission.scheduleExactAlarm.isDenied) {
+        final status = await Permission.scheduleExactAlarm.request();
+        if (status.isDenied) {
+          print('⚠️ Exact alarm permission denied');
+        } else if (status.isGranted) {
+          print('✅ Exact alarm permission granted');
+        }
+      }
 
       await _notifications
           .resolvePlatformSpecificImplementation<
@@ -94,16 +100,21 @@ class NotificationService {
     return _box.get(_hiveIntervalKey, defaultValue: 30);
   }
 
-  // --- [DEBUGGING SECTION] ---
-  // Ubah jam/menit di bawah ini untuk mengetes notifikasi
   Future<void> scheduleRepeatingNotification(
       {required int intervalDays}) async {
+    // Cek permission dulu
+    final permissionStatus = await Permission.scheduleExactAlarm.status;
+
+    if (permissionStatus.isDenied || permissionStatus.isPermanentlyDenied) {
+      print('⚠️ Cannot schedule exact alarm - permission not granted');
+      await _scheduleInexactNotification(intervalDays: intervalDays);
+      return;
+    }
+
     await _notifications.cancelAll();
 
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
-    // Ganti angka jam (10) dan menit (0) jika ingin tes
-    // Contoh Tes: now.add(Duration(minutes: 2)) -> untuk notif 2 menit lagi
     final tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local,
       now.year,
@@ -113,32 +124,89 @@ class NotificationService {
       0, // Menit 0
     ).add(Duration(days: intervalDays));
 
-    await _notifications.zonedSchedule(
-      0,
-      'Waktunya Potong Rambut! ✂️',
-      'Sudah $intervalDays hari nih. Yuk booking lagi di SVERD!',
-      scheduledDate,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: _channelDesc,
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+    try {
+      await _notifications.zonedSchedule(
+        0,
+        'Waktunya Potong Rambut! ✂️',
+        'Sudah $intervalDays hari nih. Yuk booking lagi di SVERD!',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: _channelDesc,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
 
-    await _box.put(_hiveEnabledKey, true);
-    await _box.put(_hiveIntervalKey, intervalDays);
-    await _box.put(_hiveNextDateKey, scheduledDate.toIso8601String());
+      await _box.put(_hiveEnabledKey, true);
+      await _box.put(_hiveIntervalKey, intervalDays);
+      await _box.put(_hiveNextDateKey, scheduledDate.toIso8601String());
 
-    print('🔔 Notification scheduled for: $scheduledDate');
+      print('🔔 Notification scheduled for: $scheduledDate');
+    } catch (e) {
+      print('❌ Error scheduling exact notification: $e');
+      await _scheduleInexactNotification(intervalDays: intervalDays);
+    }
+  }
+
+  Future<void> _scheduleInexactNotification({required int intervalDays}) async {
+    await _notifications.cancelAll();
+
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+
+    final tz.TZDateTime scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      10,
+      0,
+    ).add(Duration(days: intervalDays));
+
+    try {
+      await _notifications.zonedSchedule(
+        0,
+        'Waktunya Potong Rambut! ✂️',
+        'Sudah $intervalDays hari nih. Yuk booking lagi di SVERD!',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: _channelDesc,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexact,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+
+      await _box.put(_hiveEnabledKey, true);
+      await _box.put(_hiveIntervalKey, intervalDays);
+      await _box.put(_hiveNextDateKey, scheduledDate.toIso8601String());
+
+      print('🔔 Inexact notification scheduled for: $scheduledDate');
+    } catch (e) {
+      print('❌ Error scheduling inexact notification: $e');
+    }
   }
 
   Future<void> updateNotificationInterval(int newIntervalDays) async {
@@ -152,7 +220,149 @@ class NotificationService {
     print('🔕 All notifications cancelled.');
   }
 
-  Future<void> showTestNotification() async {
-    // Fungsi tes manual (opsional)
+  // =====================================================
+  // 🧪 FITUR TES NOTIFIKASI BARU
+  // =====================================================
+
+  /// Tes notifikasi instan (muncul langsung)
+  Future<void> showTestNotificationInstant() async {
+    try {
+      await _notifications.show(
+        999, // ID unik untuk tes
+        'Tes Notifikasi Instan',
+        'Notifikasi ini muncul langsung! Fitur notifikasi bekerja dengan baik ✅',
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: 'Tes notifikasi instant',
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+            styleInformation: BigTextStyleInformation(
+              'Rambutmu jelek! Ayo booking potong rambut di SVERD sekarang juga! ✂️',
+            ),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+      );
+      print('✅ Test notification sent instantly');
+    } catch (e) {
+      print('❌ Error showing instant notification: $e');
+      rethrow;
+    }
+  }
+
+  /// Tes notifikasi dengan delay (muncul setelah X detik)
+  /// Berguna untuk tes saat app ditutup
+  Future<void> showTestNotificationDelayed({int delaySeconds = 5}) async {
+    try {
+      final tz.TZDateTime scheduledDate =
+          tz.TZDateTime.now(tz.local).add(Duration(seconds: delaySeconds));
+
+      await _notifications.zonedSchedule(
+        998, // ID unik untuk tes delayed
+        'Tes Notifikasi Delayed',
+        'Notifikasi ini dijadwalkan $delaySeconds detik yang lalu. Tutup aplikasi untuk mengetes! ✅',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: 'Tes notifikasi delayed',
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+            styleInformation: BigTextStyleInformation(
+              'Rambutmu jelek! Ayo booking potong rambut di SVERD sekarang juga! ✂️',
+            ),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+
+      print(
+          '🔔 Test notification scheduled for: $scheduledDate ($delaySeconds seconds from now)');
+      print('👉 Tutup aplikasi untuk mengetes apakah notifikasi muncul!');
+    } catch (e) {
+      print('❌ Error scheduling delayed notification: $e');
+
+      // Fallback ke inexact jika exact gagal
+      try {
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(Duration(seconds: delaySeconds));
+
+        await _notifications.zonedSchedule(
+          998,
+          '🧪 Tes Notifikasi Delayed (Inexact)',
+          'Notifikasi ini dijadwalkan $delaySeconds detik yang lalu (inexact mode).',
+          scheduledDate,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId,
+              _channelName,
+              channelDescription: 'Tes notifikasi delayed',
+              importance: Importance.max,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+              enableLights: true,
+              enableVibration: true,
+              playSound: true,
+            ),
+            iOS: DarwinNotificationDetails(),
+          ),
+          androidScheduleMode: AndroidScheduleMode.inexact,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+        print('🔔 Fallback to inexact mode successful');
+      } catch (e2) {
+        print('❌ Even inexact mode failed: $e2');
+        rethrow;
+      }
+    }
+  }
+
+  /// Batalkan tes notifikasi
+  Future<void> cancelTestNotifications() async {
+    try {
+      await _notifications.cancel(999); // Cancel instant test
+      await _notifications.cancel(998); // Cancel delayed test
+      print('🔕 Test notifications cancelled');
+    } catch (e) {
+      print('❌ Error cancelling test notifications: $e');
+    }
+  }
+
+  /// Cek pending notifications
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    try {
+      final pending = await _notifications.pendingNotificationRequests();
+      print('📋 Pending notifications: ${pending.length}');
+      for (var notif in pending) {
+        print('  - ID: ${notif.id}, Title: ${notif.title}');
+      }
+      return pending;
+    } catch (e) {
+      print('❌ Error getting pending notifications: $e');
+      return [];
+    }
   }
 }

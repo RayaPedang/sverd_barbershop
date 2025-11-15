@@ -1,17 +1,13 @@
-// lib/presentation/pages/auth/register_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sverd_barbershop/presentation/widgets/my_button.dart';
 import 'package:sverd_barbershop/presentation/widgets/my_textfield.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
-import 'package:sverd_barbershop/core/utils/validators.dart'; // <-- IMPORT BARU
+import 'package:sverd_barbershop/core/utils/validators.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback onToggle;
 
-  // --- PERBAIKAN DI SINI ---
-  // Tanda titik dua (:) setelah 'required' telah dihapus.
   const RegisterPage({super.key, required this.onToggle});
 
   @override
@@ -28,9 +24,6 @@ class _RegisterPageState extends State<RegisterPage> {
   // Password visibility
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-
-  // --- FUNGSI VALIDASI EMAIL (DIHAPUS) ---
-  // bool _isEmailValid(String email) { ... }
 
   void signUp() async {
     final box = Hive.box('sverd_box');
@@ -53,7 +46,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // --- VALIDASI BARU 1: Format Email (DIMODIFIKASI) ---
+    // validasi baru 1: Format Email
     if (!Validators.isEmailValid(email)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,7 +55,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // --- VALIDASI BARU 2: Panjang Password ---
+    //validasi baru 2: Panjang Password
     if (password.length < 6) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +64,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Validasi 2: Password cocok
+    //validasi baru 3: Konfirmasi Password
     if (password != confirmPassword) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Validasi 3: Email sudah terdaftar
+    //validasi 4: Cek email sudah terdaftar
     if (box.containsKey(email)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

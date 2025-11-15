@@ -95,7 +95,6 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
   Future<void> _openGoogleMaps() async {
     final double lat = widget.branch.latitude;
     final double lng = widget.branch.longitude;
-    // --- Catatan: URL Google Maps Anda sebelumnya salah, saya perbaiki ---
     final String url =
         'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
     final Uri uri = Uri.parse(url);
@@ -110,12 +109,6 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
       }
     }
   }
-
-  // --- PERBAIKAN 1: Fungsi _makePhoneCall() DIHAPUS ---
-  /* Future<void> _makePhoneCall() async {
-    // ... (Fungsi ini dihapus seluruhnya) ...
-  }
-  */
 
   @override
   Widget build(BuildContext context) {
@@ -308,7 +301,6 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // --- PERBAIKAN 2: Row Disederhanakan ---
                       Row(
                         children: [
                           Expanded(
@@ -328,8 +320,6 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
                               ),
                             ),
                           ),
-                          // const SizedBox(width: 12), // <-- Dihapus
-                          // Expanded( ... Tombol Telepon ... ), // <-- Dihapus
                         ],
                       ),
                     ],
@@ -471,7 +461,6 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navigate ke halaman Choose Services
                         Navigator.push(
                           context,
                           MaterialPageRoute(

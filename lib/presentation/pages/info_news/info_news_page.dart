@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sverd_barbershop/core/models/info_news.dart';
-import 'package:sverd_barbershop/core/services/api_service.dart'; // <-- DIMODIFIKASI
+import 'package:sverd_barbershop/core/services/api_service.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
 import 'package:sverd_barbershop/presentation/pages/info_news/info_news_detail_page.dart';
 
@@ -13,12 +13,10 @@ class InfoNewsPage extends StatefulWidget {
 }
 
 class _InfoNewsPageState extends State<InfoNewsPage> {
-  // --- Logika API Service (DIMODIFIKASI) ---
   final ApiService _apiService = ApiService();
   List<InfoNews> _infoNewsList = [];
   bool _isLoading = true;
   String _error = '';
-  // -----------------------------------------
 
   @override
   void initState() {
@@ -26,7 +24,6 @@ class _InfoNewsPageState extends State<InfoNewsPage> {
     _fetchInfoNews();
   }
 
-  // --- FUNGSI FETCH (DIMODIFIKASI) ---
   Future<void> _fetchInfoNews() async {
     setState(() {
       _isLoading = true;
@@ -35,8 +32,6 @@ class _InfoNewsPageState extends State<InfoNewsPage> {
 
     try {
       print('🔵 [API] Fetching info/news from: InfoNewsPage');
-
-      // Memanggil dari ApiService
       final List<InfoNews> infoNews = await _apiService.fetchInfoNews();
 
       if (mounted) {
@@ -65,7 +60,6 @@ class _InfoNewsPageState extends State<InfoNewsPage> {
       print('[API] Error: $e');
     }
   }
-  // -----------------------------------
 
   @override
   Widget build(BuildContext context) {

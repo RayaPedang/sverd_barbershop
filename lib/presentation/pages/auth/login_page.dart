@@ -1,12 +1,10 @@
-// lib/presentation/pages/auth/login_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sverd_barbershop/presentation/widgets/my_button.dart';
 import 'package:sverd_barbershop/presentation/widgets/my_textfield.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
 import 'package:sverd_barbershop/presentation/pages/main_page.dart';
-import 'package:sverd_barbershop/core/utils/validators.dart'; // <-- IMPORT BARU
+import 'package:sverd_barbershop/core/utils/validators.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback onToggle;
@@ -22,12 +20,9 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _obscurePassword = true;
 
-  // --- FUNGSI VALIDASI EMAIL (DIHAPUS) ---
-  // bool _isEmailValid(String email) { ... }
-
   void signIn() {
     final box = Hive.box('sverd_box');
-    String email = emailController.text.trim(); // Hapus spasi
+    String email = emailController.text.trim();
     String password = passwordController.text;
 
     // Validasi 1: Form kosong
@@ -39,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // --- VALIDASI BARU 1: Format Email (DIMODIFIKASI) ---
+    //VALIDASI BARU 1: Format Email
     if (!Validators.isEmailValid(email)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -48,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // --- VALIDASI BARU 2: Panjang Password ---
+    //VALIDASI BARU 2: Panjang Password
     if (password.length < 6) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -136,10 +131,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 32),
 
-                // --- PERUBAHAN LABEL TEXT ---
+                // EMAIL & PASSWORD TEXTFIELDS
                 MyTextField(
                   controller: emailController,
-                  labelText: "Email", // <-- Diubah
+                  labelText: "Email",
                   labelColor: kLightTextColor,
                   fillColor: kDarkComponentColor,
                 ),

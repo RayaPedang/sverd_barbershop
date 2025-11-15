@@ -55,8 +55,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          kBackgroundColor, // Menggunakan warna background putih sesuai tema
+      backgroundColor: kDarkBlockColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -65,7 +64,6 @@ class _SplashPageState extends State<SplashPage> {
             Image.asset(
               'assets/images/logo_sverd.png',
               width: 150,
-              // Jika logo gagal dimuat, tampilkan teks fallback
               errorBuilder: (context, error, stackTrace) {
                 return const Text(
                   "SVERD",

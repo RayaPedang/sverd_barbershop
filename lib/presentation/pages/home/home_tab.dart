@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sverd_barbershop/core/models/info_news.dart';
-import 'package:sverd_barbershop/core/services/api_service.dart'; // <-- DIMODIFIKASI
+import 'package:sverd_barbershop/core/services/api_service.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
 import 'package:sverd_barbershop/presentation/pages/bookings/your_reservation_page.dart';
 import 'package:sverd_barbershop/presentation/pages/info_news/info_news_page.dart';
@@ -31,11 +31,9 @@ class _HomeTabState extends State<HomeTab> {
     'assets/images/photos/carousel_3.jpg',
   ];
 
-  // --- Logika API Service (DIMODIFIKASI) ---
   final ApiService _apiService = ApiService();
   List<InfoNews> _infoNewsList = [];
   bool _isLoadingNews = true;
-  // -----------------------------------------
 
   @override
   void initState() {
@@ -49,10 +47,9 @@ class _HomeTabState extends State<HomeTab> {
     super.dispose();
   }
 
-  // --- FUNGSI FETCH (DIMODIFIKASI) ---
+  //fetch info/news dari API
   Future<void> _fetchInfoNews() async {
     try {
-      // Memanggil dari ApiService, bukan http.get() langsung
       final List<InfoNews> infoNews = await _apiService.fetchInfoNews();
 
       if (mounted) {
@@ -70,7 +67,6 @@ class _HomeTabState extends State<HomeTab> {
       print('Error loading info/news from HomeTab: $e');
     }
   }
-  // -----------------------------------
 
   @override
   Widget build(BuildContext context) {

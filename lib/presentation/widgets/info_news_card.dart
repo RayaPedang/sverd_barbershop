@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sverd_barbershop/core/theme/colors.dart'; // <-- DIMODIFIKASI
+import 'package:sverd_barbershop/core/theme/colors.dart';
 
 class InfoNewsCard extends StatelessWidget {
   final String imagePath;

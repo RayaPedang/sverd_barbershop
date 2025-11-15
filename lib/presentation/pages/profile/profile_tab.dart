@@ -20,7 +20,6 @@ class ProfileTab extends StatefulWidget {
 class _ProfileTabState extends State<ProfileTab> {
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _kesanPesanController = TextEditingController();
 
   String _email = 'user@email.com';
   String _displayName = 'Guest';
@@ -35,6 +34,12 @@ class _ProfileTabState extends State<ProfileTab> {
   bool _notificationEnabled = false;
   int _notificationInterval = 30;
 
+  // Default message untuk kesan dan pesan
+  static const String _defaultMessage =
+      'Aplikasi ini sangat membantu dalam pemesanan layanan barbershop. '
+      'Interface-nya user-friendly dan fitur notifikasi pengingatnya sangat berguna. '
+      'Terima kasih kepada tim developer yang telah membuat aplikasi ini!';
+
   @override
   void initState() {
     super.initState();
@@ -46,7 +51,6 @@ class _ProfileTabState extends State<ProfileTab> {
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
-    _kesanPesanController.dispose();
     super.dispose();
   }
 
@@ -61,7 +65,6 @@ class _ProfileTabState extends State<ProfileTab> {
       _displayName = userData['username'] ?? 'Guest';
       _fullNameController.text = userData['fullName'] ?? _displayName;
       _phoneController.text = userData['phone'] ?? '';
-      _kesanPesanController.text = userData['kesanPesan'] ?? '';
       _imagePath = userData['imagePath'] ?? '';
     }
 
@@ -107,7 +110,6 @@ class _ProfileTabState extends State<ProfileTab> {
       userData['username'] = _fullNameController.text;
       userData['fullName'] = _fullNameController.text;
       userData['phone'] = _phoneController.text;
-      userData['kesanPesan'] = _kesanPesanController.text;
       userData['imagePath'] = _imagePath;
 
       box.put(_email, userData);
@@ -226,10 +228,6 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  // =====================================================
-  // 🧪 FUNGSI TES NOTIFIKASI BARU
-  // =====================================================
-
   Future<void> _testNotificationInstant() async {
     try {
       await _notificationService.showTestNotificationInstant();
@@ -325,59 +323,6 @@ class _ProfileTabState extends State<ProfileTab> {
       title: Text(label, style: const TextStyle(color: kTextColor)),
       trailing: const Icon(Icons.chevron_right, color: kSecondaryTextColor),
     );
-  }
-
-  Future<void> _checkPendingNotifications() async {
-    final pending = await _notificationService.getPendingNotifications();
-
-    if (mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: kBackgroundColor,
-          title: const Text(
-            '📋 Notifikasi Terjadwal',
-            style: TextStyle(color: kTextColor, fontWeight: FontWeight.bold),
-          ),
-          content: pending.isEmpty
-              ? const Text(
-                  'Tidak ada notifikasi yang dijadwalkan',
-                  style: TextStyle(color: kSecondaryTextColor),
-                )
-              : SizedBox(
-                  width: double.maxFinite,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: pending.length,
-                    itemBuilder: (context, index) {
-                      final notif = pending[index];
-                      return ListTile(
-                        dense: true,
-                        leading: const Icon(Icons.notification_important,
-                            color: kPrimaryColor, size: 20),
-                        title: Text(
-                          notif.title ?? 'No Title',
-                          style:
-                              const TextStyle(color: kTextColor, fontSize: 13),
-                        ),
-                        subtitle: Text(
-                          'ID: ${notif.id}',
-                          style: const TextStyle(
-                              color: kSecondaryTextColor, fontSize: 11),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK', style: TextStyle(color: kPrimaryColor)),
-            ),
-          ],
-        ),
-      );
-    }
   }
 
   @override
@@ -570,9 +515,7 @@ class _ProfileTabState extends State<ProfileTab> {
               ),
               const SizedBox(height: 32),
 
-              // =====================================================
-              // 🧪 SECTION TES NOTIFIKASI BARU
-              // =====================================================
+              // Tes Notifikasi
               _buildSectionTitle('Tes Notifikasi'),
               const SizedBox(height: 12),
               Container(
@@ -586,7 +529,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Gunakan fitur ini untuk memastikan notifikasi berfungsi dengan baik',
+                      'Gunakan fitur ini untuk tes fitur notifikasi.',
                       style: TextStyle(
                         color: kSecondaryTextColor,
                         fontSize: 12,
@@ -625,22 +568,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-
-                    // Tombol Cek Pending
-                    OutlinedButton.icon(
-                      onPressed: _checkPendingNotifications,
-                      icon: const Icon(Icons.list, size: 20),
-                      label: const Text('Cek Notifikasi Terjadwal'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.blue,
-                        side: const BorderSide(color: Colors.blue),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                    // TOMBOL CEK NOTIFIKASI TERJADWAL DIHAPUS
                   ],
                 ),
               ),
@@ -649,28 +577,37 @@ class _ProfileTabState extends State<ProfileTab> {
               // Kesan dan Pesan
               _buildSectionTitle('Kesan dan Pesan'),
               const SizedBox(height: 12),
-              TextField(
-                controller: _kesanPesanController,
-                readOnly: !_isEditing,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: 'kesan dan pesan ....',
-                  hintStyle: const TextStyle(color: kSecondaryTextColor),
-                  filled: true,
-                  fillColor: _isEditing
-                      ? Colors.white
-                      : kBackgroundColor.withAlpha(128),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: dividerColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: _isEditing ? kPrimaryColor : dividerColor,
-                      width: _isEditing ? 2 : 1,
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: kBackgroundColor.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: dividerColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.message_outlined,
+                          color: kPrimaryColor,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _defaultMessage,
+                      style: const TextStyle(
+                        color: kTextColor,
+                        fontSize: 14,
+                        height: 1.6,
+                      ),
+                      textAlign: TextAlign.justify,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 32),

@@ -220,17 +220,13 @@ class NotificationService {
     print('🔕 All notifications cancelled.');
   }
 
-  // =====================================================
-  // 🧪 FITUR TES NOTIFIKASI BARU
-  // =====================================================
-
   /// Tes notifikasi instan (muncul langsung)
   Future<void> showTestNotificationInstant() async {
     try {
       await _notifications.show(
         999, // ID unik untuk tes
-        'Tes Notifikasi Instan',
-        'Notifikasi ini muncul langsung! Fitur notifikasi bekerja dengan baik ✅',
+        'Waktunya Menjadi TAMPAN! ✂️',
+        'Kamu perlu potong rambut nih! Ayo booking di SVERD sekarang juga!',
         const NotificationDetails(
           android: AndroidNotificationDetails(
             _channelId,
@@ -260,8 +256,7 @@ class NotificationService {
     }
   }
 
-  /// Tes notifikasi dengan delay (muncul setelah X detik)
-  /// Berguna untuk tes saat app ditutup
+  /// Tes notifikasi delay
   Future<void> showTestNotificationDelayed({int delaySeconds = 5}) async {
     try {
       final tz.TZDateTime scheduledDate =
@@ -269,8 +264,8 @@ class NotificationService {
 
       await _notifications.zonedSchedule(
         998, // ID unik untuk tes delayed
-        'Tes Notifikasi Delayed',
-        'Notifikasi ini dijadwalkan $delaySeconds detik yang lalu. Tutup aplikasi untuk mengetes! ✅',
+        'Waktunya Menjadi TAMPAN! ✂️',
+        'Kamu perlu potong rambut nih! Ayo booking di SVERD sekarang juga!',
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -311,8 +306,8 @@ class NotificationService {
 
         await _notifications.zonedSchedule(
           998,
-          'Tes Notifikasi Delayed (Inexact)',
-          'Notifikasi ini dijadwalkan $delaySeconds detik yang lalu (inexact mode).',
+          'Waktunya Menjadi TAMPAN! ✂️',
+          'Kamu perlu potong rambut nih! Ayo booking di SVERD sekarang juga!',
           scheduledDate,
           const NotificationDetails(
             android: AndroidNotificationDetails(

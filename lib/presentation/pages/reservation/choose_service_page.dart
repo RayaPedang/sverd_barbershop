@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sverd_barbershop/core/models/branch.dart';
 import 'package:sverd_barbershop/core/models/service.dart';
-import 'package:sverd_barbershop/core/services/api_service.dart'; // <-- DIMODIFIKASI
+import 'package:sverd_barbershop/core/services/api_service.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
 import 'package:sverd_barbershop/presentation/pages/reservation/make_reservation_page.dart';
 
@@ -16,12 +16,10 @@ class ChooseServicePage extends StatefulWidget {
 }
 
 class _ChooseServicePageState extends State<ChooseServicePage> {
-  // --- Logika API Service (DIMODIFIKASI) ---
   final ApiService _apiService = ApiService();
   List<Service> _services = [];
   bool _isLoading = true;
   String _error = '';
-  // -----------------------------------------
 
   @override
   void initState() {
@@ -29,7 +27,6 @@ class _ChooseServicePageState extends State<ChooseServicePage> {
     _fetchServices();
   }
 
-  // --- FUNGSI FETCH (DIMODIFIKASI) ---
   Future<void> _fetchServices() async {
     setState(() {
       _isLoading = true;
@@ -38,8 +35,6 @@ class _ChooseServicePageState extends State<ChooseServicePage> {
 
     try {
       print('[API] Fetching services from: ChooseServicePage');
-
-      // Memanggil dari ApiService
       final List<Service> services = await _apiService.fetchServices();
 
       if (mounted) {
@@ -68,7 +63,6 @@ class _ChooseServicePageState extends State<ChooseServicePage> {
       print('[API] Error: $e');
     }
   }
-  // -----------------------------------
 
   void _selectService(Service service) {
     Navigator.push(

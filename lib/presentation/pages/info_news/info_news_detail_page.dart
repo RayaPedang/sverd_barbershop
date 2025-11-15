@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sverd_barbershop/core/models/info_news.dart'; // <-- DIMODIFIKASI
-import 'package:sverd_barbershop/core/theme/colors.dart'; // <-- DIMODIFIKASI
+import 'package:sverd_barbershop/core/models/info_news.dart';
+import 'package:sverd_barbershop/core/theme/colors.dart';
 
 class InfoNewsDetailPage extends StatelessWidget {
   final InfoNews infoNews;

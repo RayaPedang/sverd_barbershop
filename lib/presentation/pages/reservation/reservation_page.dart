@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sverd_barbershop/core/models/branch.dart';
-import 'package:sverd_barbershop/core/services/api_service.dart'; // <-- DIMODIFIKASI
+import 'package:sverd_barbershop/core/services/api_service.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
 import 'package:sverd_barbershop/presentation/pages/reservation/branch_detail_page_osm.dart';
 
@@ -14,14 +14,11 @@ class ReservationPage extends StatefulWidget {
 
 class _ReservationPageState extends State<ReservationPage> {
   final _searchController = TextEditingController();
-
-  // --- Logika API Service (DIMODIFIKASI) ---
   final ApiService _apiService = ApiService();
   List<Branch> _allBranches = [];
   List<Branch> _filteredBranches = [];
   bool _isLoading = true;
   String _error = '';
-  // -----------------------------------------
 
   @override
   void initState() {
@@ -37,7 +34,6 @@ class _ReservationPageState extends State<ReservationPage> {
     super.dispose();
   }
 
-  // --- FUNGSI FETCH (DIMODIFIKASI) ---
   Future<void> _fetchBranches() async {
     setState(() {
       _isLoading = true;
@@ -77,7 +73,6 @@ class _ReservationPageState extends State<ReservationPage> {
       }
     }
   }
-  // -----------------------------------
 
   void _filterBranches() {
     String query = _searchController.text.toLowerCase().trim();

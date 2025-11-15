@@ -311,7 +311,7 @@ class NotificationService {
 
         await _notifications.zonedSchedule(
           998,
-          '🧪 Tes Notifikasi Delayed (Inexact)',
+          'Tes Notifikasi Delayed (Inexact)',
           'Notifikasi ini dijadwalkan $delaySeconds detik yang lalu (inexact mode).',
           scheduledDate,
           const NotificationDetails(

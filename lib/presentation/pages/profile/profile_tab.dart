@@ -573,7 +573,7 @@ class _ProfileTabState extends State<ProfileTab> {
               // =====================================================
               // 🧪 SECTION TES NOTIFIKASI BARU
               // =====================================================
-              _buildSectionTitle('🧪 Tes Notifikasi'),
+              _buildSectionTitle('Tes Notifikasi'),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(20.0),

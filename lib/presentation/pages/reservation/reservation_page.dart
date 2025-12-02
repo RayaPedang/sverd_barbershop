@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:sverd_barbershop/core/models/branch.dart';
 import 'package:sverd_barbershop/core/services/api_service.dart';
 import 'package:sverd_barbershop/core/theme/colors.dart';
@@ -20,10 +21,17 @@ class _ReservationPageState extends State<ReservationPage> {
   bool _isLoading = true;
   String _error = '';
 
+  // Location Based Service (LBS) variables
+  Position? _currentPosition;
+  String _locationText = 'Mendapatkan lokasi...';
+  bool _isLoadingLocation = true;
+  String? _locationError;
+
   @override
   void initState() {
     super.initState();
     _fetchBranches();
+    _getCurrentLocation();
     _searchController.addListener(_filterBranches);
   }
 
@@ -34,6 +42,181 @@ class _ReservationPageState extends State<ReservationPage> {
     super.dispose();
   }
 
+  // Mendapatkan lokasi pengguna saat ini
+  Future<void> _getCurrentLocation() async {
+    try {
+      // Cek apakah layanan lokasi aktif
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _locationText = 'Layanan lokasi tidak aktif';
+          _locationError = 'GPS';
+          _isLoadingLocation = false;
+        });
+        return;
+      }
+
+      // Cek permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _locationText = 'Izin lokasi ditolak';
+            _locationError = 'PERMISSION';
+            _isLoadingLocation = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationText = 'Izin lokasi ditolak permanen';
+          _locationError = 'PERMISSION_FOREVER';
+          _isLoadingLocation = false;
+        });
+        return;
+      }
+
+      // STRATEGI 1: Coba dapatkan last known location dulu (sangat cepat)
+      Position? lastPosition = await Geolocator.getLastKnownPosition();
+      if (lastPosition != null && mounted) {
+        setState(() {
+          _currentPosition = lastPosition;
+          _locationText = _formatLocationText(lastPosition) + ' (Cache)';
+          _isLoadingLocation = false;
+          _locationError = null;
+        });
+
+        if (_allBranches.isNotEmpty) {
+          _sortBranchesByDistance();
+        }
+
+        // Update di background dengan lokasi real-time
+        _updateLocationInBackground();
+        return;
+      }
+
+      // STRATEGI 2: Jika tidak ada cache, dapatkan lokasi baru dengan timeout
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy:
+            LocationAccuracy.medium, // Medium lebih cepat dari high
+        timeLimit: const Duration(seconds: 10), // Timeout 10 detik
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Tidak dapat menemukan lokasi dalam 10 detik');
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+          _locationText = _formatLocationText(position);
+          _isLoadingLocation = false;
+          _locationError = null;
+        });
+
+        if (_allBranches.isNotEmpty) {
+          _sortBranchesByDistance();
+        }
+      }
+    } on TimeoutException {
+      if (mounted) {
+        setState(() {
+          _locationText = 'Timeout - Coba lagi atau aktifkan GPS';
+          _locationError = 'TIMEOUT';
+          _isLoadingLocation = false;
+        });
+      }
+      print('⏱️ Location timeout');
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _locationText = 'Error mendapatkan lokasi';
+          _locationError = 'ERROR';
+          _isLoadingLocation = false;
+        });
+      }
+      print('❌ Error getting location: $e');
+    }
+  }
+
+  // Update lokasi di background (untuk refresh dari cache ke real-time)
+  Future<void> _updateLocationInBackground() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 15),
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+          _locationText = _formatLocationText(position);
+        });
+
+        if (_allBranches.isNotEmpty) {
+          _sortBranchesByDistance();
+        }
+      }
+    } catch (e) {
+      // Silent fail - user sudah punya lokasi dari cache
+      print('Background update failed (OK): $e');
+    }
+  }
+
+  String _formatLocationText(Position position) {
+    return 'Lat: ${position.latitude.toStringAsFixed(6)}, Long: ${position.longitude.toStringAsFixed(6)}';
+  }
+
+  // Sort branches berdasarkan jarak dari lokasi pengguna
+  void _sortBranchesByDistance() {
+    if (_currentPosition == null) return;
+
+    _allBranches.sort((a, b) {
+      double distanceA = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        a.latitude,
+        a.longitude,
+      );
+
+      double distanceB = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        b.latitude,
+        b.longitude,
+      );
+
+      return distanceA.compareTo(distanceB);
+    });
+
+    setState(() {
+      _filteredBranches = _allBranches;
+    });
+  }
+
+  // Hitung jarak dari lokasi pengguna ke cabang
+  String _calculateDistance(Branch branch) {
+    if (_currentPosition == null) return '';
+
+    double distanceInMeters = Geolocator.distanceBetween(
+      _currentPosition!.latitude,
+      _currentPosition!.longitude,
+      branch.latitude,
+      branch.longitude,
+    );
+
+    if (distanceInMeters < 1000) {
+      return '${distanceInMeters.toStringAsFixed(0)} m';
+    } else {
+      double km = distanceInMeters / 1000;
+      return '${km.toStringAsFixed(1)} km';
+    }
+  }
+
   Future<void> _fetchBranches() async {
     setState(() {
       _isLoading = true;
@@ -41,7 +224,6 @@ class _ReservationPageState extends State<ReservationPage> {
     });
 
     try {
-      // Memanggil dari ApiService
       final List<Branch> branches = await _apiService.fetchBranches();
       if (mounted) {
         setState(() {
@@ -49,6 +231,11 @@ class _ReservationPageState extends State<ReservationPage> {
           _filteredBranches = branches;
           _isLoading = false;
         });
+
+        // Sort by distance jika lokasi sudah didapat
+        if (_currentPosition != null) {
+          _sortBranchesByDistance();
+        }
       }
     } on TimeoutException {
       if (mounted) {
@@ -228,7 +415,98 @@ class _ReservationPageState extends State<ReservationPage> {
     );
   }
 
+  // Widget untuk menampilkan lokasi pengguna
+  Widget _buildLocationIndicator() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Icon
+          _buildLocationIcon(),
+          const SizedBox(width: 12),
+          // Text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isLoadingLocation ? 'Mencari lokasi Anda...' : 'Lokasi Anda',
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _locationText,
+                  style: TextStyle(
+                    color: _locationError != null ? Colors.red : kTextColor,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // Refresh button jika error
+          if (_locationError != null)
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.blue, size: 20),
+              onPressed: () {
+                setState(() {
+                  _isLoadingLocation = true;
+                  _locationError = null;
+                });
+                _getCurrentLocation();
+              },
+              tooltip: 'Refresh lokasi',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationIcon() {
+    if (_isLoadingLocation) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+        ),
+      );
+    }
+
+    if (_locationError != null) {
+      return const Icon(
+        Icons.location_off,
+        color: Colors.red,
+        size: 24,
+      );
+    }
+
+    return const Icon(
+      Icons.my_location,
+      color: Colors.blue,
+      size: 24,
+    );
+  }
+
   Widget _buildBranchListItem(Branch branch) {
+    final distance = _calculateDistance(branch);
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16.0,
@@ -282,6 +560,19 @@ class _ReservationPageState extends State<ReservationPage> {
                   fontSize: 14,
                 ),
               ),
+              if (distance.isNotEmpty) ...[
+                const SizedBox(width: 12),
+                const Icon(Icons.location_on, color: Colors.blue, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  distance,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -297,6 +588,7 @@ class _ReservationPageState extends State<ReservationPage> {
       body: Column(
         children: [
           _buildSearchBar(),
+          _buildLocationIndicator(), // Widget lokasi baru
           Divider(height: 1, color: kSecondaryTextColor.withAlpha(76)),
           Expanded(child: _buildContent()),
         ],

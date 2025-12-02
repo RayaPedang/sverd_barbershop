@@ -1,37 +1,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     
-    <!-- Location Permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     
-    <!-- Internet Permission -->
     <uses-permission android:name="android.permission.INTERNET"/>
     
-    <!-- Query All Packages -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     
-    <!-- Notification Permissions -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    
-    <!-- Exact Alarm Permissions (PERBAIKAN) -->
-    <!-- USE_EXACT_ALARM: Untuk Android 13+ (API 33+), tidak perlu runtime permission -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    
-    <!-- SCHEDULE_EXACT_ALARM: Untuk Android 12+ (API 31+), butuh runtime permission -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    
-    <!-- Wake Lock untuk memastikan alarm berjalan -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:label="Sverd Barbershop"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        
-        <!-- Main Activity -->
-        <activity
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"> <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
@@ -42,31 +29,26 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true">
             
-            <!-- Meta Data untuk Theme -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:value="@style/NormalTheme"
               />
             
-            <!-- Intent Filter untuk Launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
         
-        <!-- Flutter Embedding Version -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
         
-        <!-- Scheduled Notification Receiver (PERBAIKAN) -->
         <receiver 
             android:exported="false" 
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver">
         </receiver>
         
-        <!-- Scheduled Notification Boot Receiver -->
         <receiver 
             android:exported="false" 
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
@@ -79,16 +61,13 @@
             </intent-filter>
         </receiver>
         
-        <!-- Notification Action Receiver (TAMBAHAN - Optional) -->
         <receiver 
             android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         
     </application>
     
-    <!-- Queries untuk membuka aplikasi lain (Optional tapi recommended) -->
     <queries>
-        <!-- Untuk membuka Google Maps -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
@@ -97,7 +76,6 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="geo" />
         </intent>
-        <!-- Untuk membuka Phone Dialer (jika diperlukan nanti) -->
         <intent>
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />

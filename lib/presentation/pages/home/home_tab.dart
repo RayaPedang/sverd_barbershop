@@ -284,9 +284,6 @@ class _HomeTabState extends State<HomeTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // ----------------------------------------------------
-              // PERBAIKAN: Bungkus Text dengan Expanded & tambahkan ellipsis
-              // ----------------------------------------------------
               const Expanded(
                 child: Text(
                   'Informasi & Berita',

@@ -94,8 +94,9 @@ class _InfoNewsPageState extends State<InfoNewsPage> {
     }
 
     if (_error.isNotEmpty) {
+      // PERBAIKAN: Menambahkan SingleChildScrollView untuk mencegah overflow
       return Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -113,7 +113,7 @@ class _ChooseServicePageState extends State<ChooseServicePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
               Text(
                 _error,
@@ -178,10 +178,17 @@ class _ChooseServicePageState extends State<ChooseServicePage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              service.name,
-              style: const TextStyle(color: kLightTextColor, fontSize: 18),
+            // PERBAIKAN: Bungkus Text dengan Expanded untuk mencegah overflow
+            Expanded(
+              child: Text(
+                service.name,
+                style: const TextStyle(color: kLightTextColor, fontSize: 18),
+                overflow: TextOverflow
+                    .ellipsis, // Tambahkan ellipsis jika kepanjangan
+                maxLines: 1,
+              ),
             ),
+            const SizedBox(width: 8), // Beri jarak sedikit
             const Icon(Icons.chevron_right, color: kLightTextColor, size: 28),
           ],
         ),

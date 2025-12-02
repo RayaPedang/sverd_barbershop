@@ -106,7 +106,7 @@ class _ReservationPageState extends State<ReservationPage> {
       ).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          throw TimeoutException('Tidak dapat menemukan lokasi dalam 10 detik');
+          throw TimeoutException('Tidak dapat menemukan lokasi');
         },
       );
 

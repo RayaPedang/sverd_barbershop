@@ -492,13 +492,18 @@ class _MakeReservationPageState extends State<MakeReservationPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '${_selectedDate.day.toString().padLeft(2, '0')} - ${_selectedDate.month.toString().padLeft(2, '0')} - ${_selectedDate.year}',
-                            style: const TextStyle(
-                              color: kTextColor,
-                              fontSize: 14,
+                          // PERBAIKAN: Bungkus Text tanggal dengan Expanded
+                          Expanded(
+                            child: Text(
+                              '${_selectedDate.day.toString().padLeft(2, '0')} - ${_selectedDate.month.toString().padLeft(2, '0')} - ${_selectedDate.year}',
+                              style: const TextStyle(
+                                color: kTextColor,
+                                fontSize: 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           const Icon(
                             Icons.calendar_today,
                             color: kTextColor,

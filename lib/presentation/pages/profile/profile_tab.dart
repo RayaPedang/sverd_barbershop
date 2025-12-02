@@ -423,28 +423,29 @@ class _ProfileTabState extends State<ProfileTab> {
                 child: Column(
                   children: [
                     // Toggle Notification
+                    // ----------------------------------------------------
+                    // PERBAIKAN: Menggunakan Single Row + Expanded
+                    // ----------------------------------------------------
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              _notificationEnabled
-                                  ? Icons.notifications_active
-                                  : Icons.notifications_off_outlined,
-                              color: kPrimaryColor,
-                              size: 20,
+                        Icon(
+                          _notificationEnabled
+                              ? Icons.notifications_active
+                              : Icons.notifications_off_outlined,
+                          color: kPrimaryColor,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Notifikasi Pengingat',
+                            style: TextStyle(
+                              color: kTextColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Notifikasi Pengingat',
-                              style: TextStyle(
-                                color: kTextColor,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         Switch(
                           value: _notificationEnabled,
@@ -463,12 +464,12 @@ class _ProfileTabState extends State<ProfileTab> {
                             'Ulangi Notifikasi Setiap:',
                             style: TextStyle(
                               color: kSecondaryTextColor,
-                              fontSize: 13,
+                              fontSize: 12,
                             ),
                           ),
                           const SizedBox(height: 12),
                           Wrap(
-                            spacing: 8,
+                            spacing: 4,
                             runSpacing: 8,
                             children: [14, 30, 60].map((days) {
                               final isSelected = _notificationInterval == days;
@@ -477,7 +478,7 @@ class _ProfileTabState extends State<ProfileTab> {
                                 borderRadius: BorderRadius.circular(20),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                                    horizontal: 10,
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
@@ -568,7 +569,6 @@ class _ProfileTabState extends State<ProfileTab> {
                         ),
                       ),
                     ),
-                    // TOMBOL CEK NOTIFIKASI TERJADWAL DIHAPUS
                   ],
                 ),
               ),

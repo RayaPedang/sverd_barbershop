@@ -96,7 +96,7 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
     final double lat = widget.branch.latitude;
     final double lng = widget.branch.longitude;
     final String url =
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng';
     final Uri uri = Uri.parse(url);
 
     if (await canLaunchUrl(uri)) {
@@ -269,6 +269,7 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      // PERBAIKAN: Menambahkan Expanded pada teks jarak/lokasi
                       Row(
                         children: [
                           const Icon(
@@ -277,16 +278,20 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
                             size: 20,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            _isLoadingLocation
-                                ? 'Menghitung jarak...'
-                                : _distanceText,
-                            style: TextStyle(
-                              color: _isLoadingLocation
-                                  ? kSecondaryTextColor
-                                  : kPrimaryColor,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                          Expanded(
+                            child: Text(
+                              _isLoadingLocation
+                                  ? 'Menghitung jarak...'
+                                  : _distanceText,
+                              style: TextStyle(
+                                color: _isLoadingLocation
+                                    ? kSecondaryTextColor
+                                    : kPrimaryColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                         ],
@@ -325,6 +330,7 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
                     ],
                   ),
                 ),
+                // ... (Kode selanjutnya sama seperti sebelumnya)
                 const Divider(height: 1),
                 Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -405,7 +411,7 @@ class _BranchDetailPageOSMState extends State<BranchDetailPageOSM> {
                             ),
                           ),
                           const Spacer(),
-                          Text(
+                          const Text(
                             'OpenStreetMap',
                             style: TextStyle(
                               fontSize: 10,

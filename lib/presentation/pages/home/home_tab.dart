@@ -105,7 +105,7 @@ class _HomeTabState extends State<HomeTab> {
       child: RichText(
         text: TextSpan(
           style: const TextStyle(
-            fontSize: 20,
+            fontSize: 16,
             color: kTextColor,
             fontFamily: 'Poppins',
           ),
@@ -130,7 +130,7 @@ class _HomeTabState extends State<HomeTab> {
           const Text(
             'Menu',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: kTextColor,
             ),
@@ -284,12 +284,19 @@ class _HomeTabState extends State<HomeTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Informasi & Berita',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: kTextColor,
+              // ----------------------------------------------------
+              // PERBAIKAN: Bungkus Text dengan Expanded & tambahkan ellipsis
+              // ----------------------------------------------------
+              const Expanded(
+                child: Text(
+                  'Informasi & Berita',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: kTextColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
               TextButton(
@@ -305,6 +312,7 @@ class _HomeTabState extends State<HomeTab> {
                   'Lihat Semua',
                   style: TextStyle(
                     color: kPrimaryColor,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -329,9 +337,9 @@ class _HomeTabState extends State<HomeTab> {
               }).toList(),
             )
           else
-            Center(
+            const Center(
               child: Padding(
-                padding: const EdgeInsets.all(32.0),
+                padding: EdgeInsets.all(32.0),
                 child: Text(
                   'Tidak ada informasi atau berita yang tersedia',
                   style: TextStyle(color: kSecondaryTextColor),

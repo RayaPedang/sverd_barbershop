@@ -471,12 +471,12 @@ class _ReservationPageState extends State<ReservationPage> {
   Widget _buildLocationIndicator() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: const Color.fromARGB(255, 63, 63, 63).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.blue.withOpacity(0.3),
+          color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -493,7 +493,7 @@ class _ReservationPageState extends State<ReservationPage> {
                 Text(
                   _isLoadingLocation ? 'Mencari lokasi Anda...' : 'Lokasi Anda',
                   style: const TextStyle(
-                    color: Colors.blue,
+                    color: Color.fromARGB(255, 0, 0, 0),
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -551,7 +551,7 @@ class _ReservationPageState extends State<ReservationPage> {
 
     return const Icon(
       Icons.my_location,
-      color: Colors.blue,
+      color: Color.fromARGB(255, 0, 0, 0),
       size: 24,
     );
   }

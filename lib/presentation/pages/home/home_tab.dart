@@ -139,7 +139,7 @@ class _HomeTabState extends State<HomeTab> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
             decoration: BoxDecoration(
-              color: kDarkBlockColor,
+              color: const Color.fromARGB(255, 62, 53, 53),
               borderRadius: BorderRadius.circular(20.0),
             ),
             child: Row(

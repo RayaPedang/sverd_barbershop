@@ -80,9 +80,10 @@ class _ProfileTabState extends State<ProfileTab> {
     });
   }
 
-  Future<void> _pickImage() async {
+  // UPDATE: Fungsi ini sekarang menerima parameter ImageSource (Camera/Gallery)
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: source);
 
     if (pickedFile != null) {
       if (kIsWeb) {
@@ -92,6 +93,7 @@ class _ProfileTabState extends State<ProfileTab> {
       } else {
         final appDir = await getApplicationDocumentsDirectory();
         final fileName = p.basename(pickedFile.path);
+        // Copy file dari cache kamera/galeri ke penyimpanan lokal aplikasi
         final savedImage = await File(
           pickedFile.path,
         ).copy('${appDir.path}/$fileName');
@@ -100,6 +102,43 @@ class _ProfileTabState extends State<ProfileTab> {
         });
       }
     }
+  }
+
+  // BARU: Menampilkan Bottom Sheet untuk memilih Kamera atau Galeri
+  void _showPickerOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext bc) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: kPrimaryColor),
+                title: const Text('Ambil dari Galeri',
+                    style: TextStyle(color: kTextColor)),
+                onTap: () {
+                  _pickImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera, color: kPrimaryColor),
+                title: const Text('Gunakan Kamera',
+                    style: TextStyle(color: kTextColor)),
+                onTap: () {
+                  _pickImage(ImageSource.camera);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _saveUpdates() {
@@ -254,7 +293,6 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _testNotificationDelayed() async {
-    // Dialog untuk memilih delay
     final delay = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
@@ -362,11 +400,12 @@ class _ProfileTabState extends State<ProfileTab> {
                           ),
                           child: IconButton(
                             icon: const Icon(
-                              Icons.edit,
+                              Icons.camera_alt, // UPDATE: Icon Kamera
                               color: kLightTextColor,
                               size: 20,
                             ),
-                            onPressed: _pickImage,
+                            // UPDATE: Panggil modal sheet pilihan
+                            onPressed: () => _showPickerOptions(context),
                           ),
                         ),
                       ),
@@ -422,10 +461,6 @@ class _ProfileTabState extends State<ProfileTab> {
                 ),
                 child: Column(
                   children: [
-                    // Toggle Notification
-                    // ----------------------------------------------------
-                    // PERBAIKAN: Menggunakan Single Row + Expanded
-                    // ----------------------------------------------------
                     Row(
                       children: [
                         Icon(
@@ -456,7 +491,6 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                     if (_notificationEnabled) ...[
                       const Divider(height: 24),
-                      // Interval Selector
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -538,8 +572,6 @@ class _ProfileTabState extends State<ProfileTab> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-
-                    // Tombol Tes Instan
                     OutlinedButton.icon(
                       onPressed: _testNotificationInstant,
                       icon: const Icon(Icons.flash_on, size: 20),
@@ -554,8 +586,6 @@ class _ProfileTabState extends State<ProfileTab> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                    // Tombol Tes Delayed (Background)
                     OutlinedButton.icon(
                       onPressed: _testNotificationDelayed,
                       icon: const Icon(Icons.alarm, size: 20),

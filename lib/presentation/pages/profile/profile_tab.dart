@@ -36,9 +36,10 @@ class _ProfileTabState extends State<ProfileTab> {
 
   // Default message untuk kesan dan pesan
   static const String _defaultMessage =
-      'Aplikasi ini sangat membantu dalam pemesanan layanan barbershop. '
-      'Interface-nya user-friendly dan fitur notifikasi pengingatnya sangat berguna. '
-      'Terima kasih kepada tim developer yang telah membuat aplikasi ini!';
+      'Terima kasih kepada Pak Bagus atas projek yang luar biasa, seru, dan sangat memorable ini! '
+      'Jujur walaupun saya kesulitan dalam mengerjakan projek ini, tapi projek ini sangat seru dan menantang. '
+      'Untuk ke depannya, saya harap Mata Kuliah ini bisa terus mengadakan projek-projek yang menantang seperti ini agar kami sebagai mahasiswa bisa terus belajar dan berkembang. '
+      'Dan juga saya harap Pak Bagus dapat lebih sering memberikan bimbingan kepada mahasiswa agar projek akhir para mahasiswa membuahkan hasil yang BAGUS BAGUS. ';
 
   @override
   void initState() {
